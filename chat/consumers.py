@@ -25,21 +25,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        sender_id = text_data_json.get('sender_id', 'Anonymous')
+        receiver_id = text_data_json.get('receiver_id', 'Broadcast')
+        
+        # SAVE TO MONGO (Async)
+        from .db import messages_collection_async
+        import datetime
+        await messages_collection_async.insert_one({
+            "sender_id": sender_id,
+            "receiver_id": receiver_id,
+            "message": message,
+            "timestamp": datetime.datetime.now(datetime.UTC)
+        })
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message
+                'message': message,
+                'sender_id': sender_id,
+                'receiver_id': receiver_id,
             }
         )
 
     # Receive message from room group
     async def chat_message(self, event):
         message = event['message']
+        sender_id = event['sender_id']
+        receiver_id = event['receiver_id']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'message': message
+            'message': message,
+            'sender_id': sender_id,
+            'receiver_id': receiver_id
         }))

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro WhatsApp 1995</title>
+    <!-- Firebase SDK v8 (Namespaced) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <style>
+        :root {
+            --win95-gray: #c0c0c0;
+            --win95-blue: #000080;
+            --win95-light: #ffffff;
+            --win95-dark: #808080;
+            --win95-border-light: #dfdfdf;
+            --win95-border-dark: #000000;
+        }
+
+        body {
+            background-color: #008080;
+            font-family: 'MS Sans Serif', Tahoma, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .window {
+            background-color: var(--win95-gray);
+            width: 850px;
+            height: 550px;
+            border: 2px solid;
+            border-color: var(--win95-border-light) var(--win95-border-dark) var(--win95-border-dark) var(--win95-border-light);
+            box-shadow: 1px 1px 0 1px var(--win95-border-dark);
+            display: flex;
+            flex-direction: column;
+            padding: 2px;
+        }
+
+        .title-bar {
+            background-color: var(--win95-blue);
+            color: white;
+            padding: 3px 5px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            overflow: hidden;
+            border-top: 1px solid var(--win95-dark);
+        }
+
+        /* Views */
+        #auth-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; flex-grow: 1; gap: 10px; }
+        #sidebar { width: 250px; background: var(--win95-gray); border-right: 2px solid var(--win95-dark); display: none; flex-direction: column; }
+        #chat-area { flex-grow: 1; background: var(--win95-gray); display: none; flex-direction: column; }
+
+        .sidebar-header { padding: 10px; border-bottom: 2px solid var(--win95-dark); background: var(--win95-light); font-weight: bold; font-size: 12px; }
+        .contact-list { flex-grow: 1; overflow-y: auto; background: white; margin: 5px; border: 2px solid var(--win95-dark); }
+        .contact-item { padding: 8px 10px; border-bottom: 1px solid #efefef; cursor: pointer; font-size: 12px; }
+        .contact-item:hover, .contact-item.active { background: #000080; color: white; }
+
+        .chat-log { flex-grow: 1; background: white; margin: 5px; border: 2px solid var(--win95-dark); padding: 10px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; }
+        .msg-line { margin-bottom: 5px; }
+        .msg-me { color: blue; }
+        .msg-them { color: darkred; }
+
+        .win95-btn { background: var(--win95-gray); border: 2px solid; border-color: var(--win95-border-light) var(--win95-border-dark) var(--win95-border-dark) var(--win95-border-light); padding: 4px 12px; cursor: pointer; font-family: inherit; }
+        .win95-btn:active { border-color: var(--win95-border-dark) var(--win95-border-light) var(--win95-border-light) var(--win95-border-dark); }
+        input { border: 2px solid; border-color: var(--win95-dark) var(--win95-border-light) var(--win95-border-light) var(--win95-dark); padding: 3px; outline: none; }
+
+        #debug-bar { width: 850px; background: #000; color: #0f0; font-family: monospace; font-size: 10px; padding: 2px 5px; margin-top: 5px; border: 1px solid #555; }
+    </style>
+</head>
+<body>
+
+<div class="window">
+    <div class="title-bar">
+        <div>💾 Internal Messenger 1.0 (Windows 95)</div>
+        <button class="win95-btn" style="padding: 0 5px;" onclick="auth.signOut()">Logout</button>
+    </div>
+
+    <div class="main-container">
+        <!-- Auth View -->
+        <div id="auth-panel">
+            <h2 style="margin: 0;">System Login</h2>
+            <p style="font-size: 12px;">Authenticate via Google OAuth 2.0 Provider</p>
+            <div id="auth-error" style="color: red; font-size: 12px; max-width: 250px; text-align: center; margin-bottom: 10px;"></div>
+            <button class="win95-btn" onclick="loginWithGooglePopup()" style="font-weight: bold; color: #000080;">SIGN IN WITH GOOGLE</button>
+            <div style="border-top: 1px solid #000; width: 50%; margin: 10px 0;"></div>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <div style="display: flex; gap: 5px;">
+                <button class="win95-btn" onclick="login()">Login</button>
+                <button class="win95-btn" onclick="register()">Register</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="sidebar-header" id="user-display">Checking session...</div>
+            <div style="padding: 5px; background: #eee;">
+                <input type="text" id="target-email" placeholder="Connect with email..." style="width: 75%;">
+                <button class="win95-btn" onclick="connectUser()">Add</button>
+            </div>
+            <div class="contact-list" id="contact-list"></div>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-area">
+            <div id="chat-title" style="padding: 5px; font-weight: bold; border-bottom: 1px solid #888;">Select a contact</div>
+            <div class="chat-log" id="chat-log"></div>
+            <div style="padding: 5px; display: flex; gap: 5px;">
+                <input type="text" id="msg-input" style="flex-grow: 1;" placeholder="Type message..." autocomplete="off">
+                <button class="win95-btn" id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="debug-bar">DEBUG: Waiting for system...</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYUK49tx3MgGSIezxCBy1oAPb62LOjNmk",
+        authDomain: "chat-app-af4ea.firebaseapp.com",
+        projectId: "chat-app-af4ea",
+        storageBucket: "chat-app-af4ea.firebasestorage.app",
+        messagingSenderId: "955196204318",
+        appId: "1:955196204318:web:cd5b879204bad8a7e7950f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // Configure OAuth provider properly
+    provider.addScope('email');
+    provider.addScope('profile');
+    provider.setCustomParameters({
+        'prompt': 'select_account'
+    });
+
+    let myEmail = "";
+    let activeChat = "";
+    let socket = null;
+
+    const debug = (msg) => { document.getElementById('debug-bar').innerText = "DEBUG: " + msg; console.log(msg); };
+
+    // Use popup method for Google OAuth 2.0
+    function loginWithGooglePopup() {
+        debug("Opening Google Sign-in popup...");
+        const errorDiv = document.getElementById('auth-error');
+        errorDiv.innerText = ''; // Clear previous errors
+
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                debug("Popup success! User: " + result.user.email);
+                // The onAuthStateChanged listener will handle the UI update
+            })
+            .catch(e => {
+                debug("Popup Error: " + e.code);
+                console.error("Full OAuth error:", e);
+                
+                if (e.code === 'auth/unauthorized-domain') {
+                    errorDiv.innerText = "This website's domain is not authorized for login. Please add '" + window.location.hostname + "' to the Firebase Authentication console.";
+                } else if (e.code === 'auth/popup-blocked') {
+                    errorDiv.innerText = "Your browser blocked the sign-in popup. Please allow popups for this site to continue.";
+                } else if (e.code === 'auth/cancelled-popup-request') {
+                    errorDiv.innerText = "The sign-in popup was closed before completing. Please try again.";
+                } else {
+                    errorDiv.innerText = "An unknown error occurred during sign-in. Check the console for details.";
+                }
+            });
+    }
+
+    // Handle initial state and cleanup
+    window.addEventListener('load', () => {
+        debug("System ready. Current user: " + (auth.currentUser ? auth.currentUser.email : 'none'));
+    });
+
+    function login() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => debug(e.message)); }
+    function register() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => debug(e.message)); }
+
+    // Listen for auth state changes
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            debug("User detected: " + user.email);
+            myEmail = user.email;
+
+            // SHOW UI IMMEDIATELY
+            document.getElementById('auth-panel').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'flex';
+            document.getElementById('chat-area').style.display = 'flex';
+            document.getElementById('user-display').innerText = "Logged in: " + myEmail;
+
+            setupSocket();
+            refreshContacts();
+        } else {
+            debug("No active session. Please sign in.");
+            document.getElementById('auth-panel').style.display = 'flex';
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'none';
+        }
+    });
+
+    function setupSocket() {
+        if(socket) return;
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`${wsScheme}://${window.location.host}/ws/chat/`);
+        
+        socket.onopen = () => debug("WebSocket Connected.");
+        socket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if ((data.sender_id === activeChat && data.receiver_id === myEmail) || 
+                (data.sender_id === myEmail && data.receiver_id === activeChat)) {
+                appendMsg(data.sender_id, data.message);
+            }
+            refreshContacts();
+        };
+        socket.onclose = () => debug("WebSocket Disconnected. Refresh page.");
+    }
+
+    async function refreshContacts() {
+        try {
+            const res = await fetch('/users/');
+            const data = await res.json();
+            const list = document.getElementById('contact-list');
+            list.innerHTML = '';
+            data.users.forEach(email => {
+                if(email !== myEmail && email !== "Anonymous") {
+                    const div = document.createElement('div');
+                    div.className = `contact-item ${activeChat === email ? 'active' : ''}`;
+                    div.innerText = email;
+                    div.onclick = () => openChat(email);
+                    list.appendChild(div);
+                }
+            });
+        } catch(e) { debug("Sync Error: " + e.message); }
+    }
+
+    function connectUser() {
+        const email = document.getElementById('target-email').value;
+        if(email) openChat(email);
+    }
+
+    async function openChat(email) {
+        activeChat = email;
+        document.getElementById('chat-title').innerText = "Chatting with: " + email;
+        document.getElementById('chat-log').innerHTML = 'Fetching thread...';
+        
+        try {
+            const res = await fetch(`/thread/?u1=${myEmail}&u2=${activeChat}`);
+            const data = await res.json();
+            document.getElementById('chat-log').innerHTML = '';
+            data.history.forEach(m => appendMsg(m.sender, m.message));
+        } catch(e) { debug("Thread Error: " + e.message); }
+    }
+
+    function appendMsg(sender, text) {
+        const log = document.getElementById('chat-log');
+        const div = document.createElement('div');
+        div.className = 'msg-line';
+        const isMe = sender === myEmail;
+        div.innerHTML = `<span class="${isMe ? 'msg-me' : 'msg-them'}">[${sender}]</span>: ${text}`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function send() {
+        const input = document.getElementById('msg-input');
+        if (input.value && activeChat && socket) {
+            socket.send(JSON.stringify({
+                'message': input.value,
+                'sender_id': myEmail,
+                'receiver_id': activeChat
+            }));
+            input.value = '';
+        }
+    }
+
+    document.getElementById('send-btn').onclick = send;
+    document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') send(); };
+</script>
+</body>
+</html>

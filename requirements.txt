@@ -5,3 +5,7 @@ channels-redis
 uvicorn
 gunicorn
 asgiref
+motor
+pymongo
+dnspython
+python-dotenv

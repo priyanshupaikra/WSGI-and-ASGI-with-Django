@@ -17,10 +17,13 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from chat.views import sync_view, async_view
+from chat.views import sync_view, async_view, index_view, get_users, get_thread
 
 urlpatterns = [
+    path("", index_view),
     path("admin/", admin.site.urls),
     path("sync/", sync_view),
     path("async/", async_view),
+    path("users/", get_users),
+    path("thread/", get_thread),
 ]

@@ -1,0 +1,7 @@
+django
+daphne
+channels
+channels-redis
+uvicorn
+gunicorn
+asgiref

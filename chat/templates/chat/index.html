@@ -131,12 +131,12 @@
 
 <script>
     const firebaseConfig = {
-        apiKey: "AIzaSyAYUK49tx3MgGSIezxCBy1oAPb62LOjNmk",
-        authDomain: "chat-app-af4ea.firebaseapp.com",
-        projectId: "chat-app-af4ea",
-        storageBucket: "chat-app-af4ea.firebasestorage.app",
-        messagingSenderId: "955196204318",
-        appId: "1:955196204318:web:cd5b879204bad8a7e7950f"
+        apiKey: "{{ FIREBASE_API_KEY }}",
+        authDomain: "{{ FIREBASE_AUTH_DOMAIN }}",
+        projectId: "{{ FIREBASE_PROJECT_ID }}",
+        storageBucket: "{{ FIREBASE_STORAGE_BUCKET }}",
+        messagingSenderId: "{{ FIREBASE_MESSAGING_SENDER_ID }}",
+        appId: "{{ FIREBASE_APP_ID }}"
     };
 
     firebase.initializeApp(firebaseConfig);

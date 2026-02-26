@@ -4,7 +4,8 @@ import asyncio
 
 def index_view(request):
     """Serve the two-sided frontend."""
-    return render(request, 'chat/index.html')
+    from django.conf import settings
+    return render(request, 'chat/index.html', settings.FIREBASE_CONFIG)
 
 def sync_view(request):
     """Traditional synchronous view with MongoDB data."""

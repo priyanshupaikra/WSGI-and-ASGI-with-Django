@@ -22,3 +22,5 @@ Welcome! This repository is focused on mastering the backend architecture of Dja
 ## 🗺️ How to follow this?
 
 Check out the **[planning.md](planning.md)** file to see the learning phases. It covers everything from basic theory to elite-level production architecture.
+
+https://docs.google.com/document/d/18HBm9uz3__CwC9dZPcQkCI1aratL86jYlq3-5uuYCvw/edit?usp=sharing
